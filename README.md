@@ -10,9 +10,13 @@ An intermediate level project for learning vue
 - Dynamically change classes based on conditions
 - Fetch data from API
 
-## 1. Create and Style the User Interface. Part 1
+## 1. Create and Style the User Interface. Part 1(A)
 
 In this video I would cover the design part of the quiz app, using tailwind. Starting with the tailwind set up.
+
+## 1b. Create and Style the User Interface. Part 1(B)
+
+In this video I would cover the design part of the quiz app, using tailwind. Applying custom styles to carter to different conditions. EG when the option is wrong, correct or the default state.
 
 **Resources**
 
