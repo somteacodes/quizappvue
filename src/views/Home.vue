@@ -1,5 +1,8 @@
 <template>
   <main class="flex h-screen items-center justify-center bg-gray-100">
+    <!-- quiz overlay -->
+    <QuizCompleteOverlay v-if="endOfQuiz"></QuizCompleteOverlay>
+
     <!-- quiz container -->
 
     <div
@@ -21,7 +24,10 @@
 
         <!-- timer container -->
         <div class="bg-white shadow-lg p-1 rounded-full w-full h-5 mt-4">
-          <div class="bg-blue-700 rounded-full w-11/12 h-full"></div>
+          <div
+            class="bg-blue-700 rounded-full w-11/12 h-full"
+            :style="`width:${timer}%`"
+          ></div>
         </div>
 
         <!-- question container -->
@@ -85,11 +91,13 @@
 
  <script>
 import { onMounted, ref } from "vue";
+import QuizCompleteOverlay from "./components/QuizCompleteOverlay";
 export default {
   setup() {
     // data
     let canClick = true;
-
+    let timer = ref(100);
+    let endOfQuiz = ref(false);
     let questionCounter = ref(0);
     let score = ref(0);
     const currentQuestion = ref({
@@ -98,40 +106,20 @@ export default {
       choices: [],
     });
 
-    const questions = [
-      {
-        question:
-          "Which programming language shares its name with an island in Indonesia?",
-        answer: 1,
-        choices: ["Java", "Python", "C", "Jakarta"],
-      },
-      {
-        question: "On Twitter, what is the character limit for a Tweet?",
-        answer: 3,
-        choices: ["120", "160", "140", "100"],
-      },
-      {
-        question: "What does the 'MP' stand for in MP3?",
-        answer: 4,
-        choices: [
-          "Music Player",
-          "Multi Pass",
-          "Micro Point",
-          "Moving Picture",
-        ],
-      },
-    ];
+    const questions = ref([]);
 
     const loadQuestion = () => {
       canClick = true;
       // Check if there are more questions to load
-      if (questions.length > questionCounter.value) {
+      if (questions.value.length > questionCounter.value) {
         // load question
-        currentQuestion.value = questions[questionCounter.value];
+        timer.value = 100;
+        currentQuestion.value = questions.value[questionCounter.value];
         console.log("Current questions", currentQuestion.value);
         questionCounter.value++;
       } else {
         // no more questions
+        endOfQuiz.value = true;
         console.log("Out of questions");
       }
     };
@@ -167,6 +155,7 @@ export default {
           divContainer.classList.add("option-wrong");
           divContainer.classList.remove("option-default");
         }
+        timer.value = 100;
         canClick = false;
         // TODO go to next question
         clearSelected(divContainer);
@@ -177,12 +166,60 @@ export default {
       }
     };
 
+    const countDownTimer = function () {
+      let interVal = setInterval(() => {
+        if (timer.value > 0) {
+          timer.value--;
+        } else {
+          console.log("timer is up");
+          clearInterval(interVal);
+        }
+      }, 150);
+    };
+
+    const fetchQuestionsFromServer = async function () {
+      console.log("fetch questions from server");
+      fetch("https://opentdb.com/api.php?amount=10&category=18")
+        .then((res) => {
+          return res.json();
+        })
+        .then((data) => {
+          // map json to fit our own arrangement
+          const newQuestions = data.results.map((serverQuestion) => {
+            const arrangedQuestion = {
+              question: serverQuestion.question,
+              choices: "",
+              answer: "",
+            };
+
+            const choices = serverQuestion.incorrect_answers;
+
+            arrangedQuestion.answer = Math.floor(Math.random() * 4 + 1);
+
+            choices.splice(
+              arrangedQuestion.answer - 1,
+              0,
+              serverQuestion.correct_answer
+            );
+
+            arrangedQuestion.choices = choices;
+
+            return arrangedQuestion;
+          });
+          console.log("new formatted questions", newQuestions);
+          questions.value = newQuestions;
+          loadQuestion();
+          countDownTimer();
+        });
+    };
+
     // lifecycle hooks
     onMounted(() => {
-      loadQuestion();
+      fetchQuestionsFromServer();
     });
     // return
     return {
+      timer,
       currentQuestion,
       questions,
       score,
@@ -190,7 +227,11 @@ export default {
       loadQuestion,
       onOptionClicked,
       optionChosen,
+      endOfQuiz,
     };
+  },
+  components: {
+    QuizCompleteOverlay,
   },
 };
 </script>
