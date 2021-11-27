@@ -2,7 +2,11 @@
 <template>
   <main class="flex h-screen items-center justify-center bg-gray-100">
     <!-- quiz overlay -->
-    <QuizCompleteOverlay v-if="endOfQuiz"></QuizCompleteOverlay>
+    <QuizCompleteOverlay
+      v-if="endOfQuiz"
+      :percent="percentageScore"
+      @restartQuiz="onQuizStart"
+    ></QuizCompleteOverlay>
 
     <!-- quiz container -->
 
@@ -36,7 +40,7 @@
           class="rounded-lg bg-gray-100 p-2 neumorph-1 text-center font-bold text-gray-800 mt-8"
         >
           <div class="bg-white p-5">
-            {{ currentQuestion.question }}
+            {{ formattedQuestion }}
           </div>
         </div>
 
@@ -104,8 +108,9 @@ export default {
     const currentQuestion = ref({
       question: "",
       answer: 1,
-      choices: []
+      choices: [],
     });
+    let percentageScore = ref(0);
 
     const questions = ref([]);
 
@@ -120,20 +125,20 @@ export default {
         questionCounter.value++;
       } else {
         // no more questions
-        endOfQuiz.value = true;
+        onQuizEnd();
         console.log("Out of questions");
       }
     };
 
     // methods/functions
     let itemsRef = [];
-    const optionChosen = element => {
+    const optionChosen = (element) => {
       if (element) {
         itemsRef.push(element);
       }
     };
 
-    const clearSelected = divSelected => {
+    const clearSelected = (divSelected) => {
       setTimeout(() => {
         divSelected.classList.remove("option-correct");
         divSelected.classList.remove("option-wrong");
@@ -173,6 +178,7 @@ export default {
           timer.value--;
         } else {
           console.log("timer is up");
+          onQuizEnd();
           clearInterval(interVal);
         }
       }, 150);
@@ -181,16 +187,16 @@ export default {
     const fetchQuestionsFromServer = async function() {
       console.log("fetch questions from server");
       fetch("https://opentdb.com/api.php?amount=10&category=18")
-        .then(res => {
+        .then((res) => {
           return res.json();
         })
-        .then(data => {
+        .then((data) => {
           // map json to fit our own arrangement
-          const newQuestions = data.results.map(serverQuestion => {
+          const newQuestions = data.results.map((serverQuestion) => {
             const arrangedQuestion = {
               question: serverQuestion.question,
               choices: "",
-              answer: ""
+              answer: "",
             };
 
             const choices = serverQuestion.incorrect_answers;
@@ -214,6 +220,36 @@ export default {
         });
     };
 
+    const onQuizEnd = function() {
+      // calculate the percentage
+      percentageScore.value = (score.value / 100) * 100;
+
+      // stop timers
+      timer.value = 0;
+
+      // show overlay
+      endOfQuiz.value = true;
+    };
+
+    const onQuizStart = function() {
+      //1 . set default values
+      canClick = true;
+      timer.value = 100;
+      endOfQuiz.value = false;
+      questionCounter.value = 0;
+      score.value = 0;
+      currentQuestion.value = {
+        question: "",
+        answer: 1,
+        choices: [],
+      };
+      percentageScore.value = 0;
+      questions.value = [];
+
+      //2. fetch questions from server
+      fetchQuestionsFromServer();
+    };
+
     // lifecycle hooks
     onMounted(() => {
       fetchQuestionsFromServer();
@@ -228,11 +264,39 @@ export default {
       loadQuestion,
       onOptionClicked,
       optionChosen,
-      endOfQuiz
+      endOfQuiz,
+      onQuizEnd,
+      percentageScore,
+      onQuizStart,
     };
   },
+
+  computed: {
+    formattedQuestion() {
+      let entities = {
+        amp: "&",
+        apos: "'",
+        "#x27": "'",
+        "#x2F": "/",
+        "#39": "'",
+        "#47": "/",
+        lt: "<",
+        gt: ">",
+        nbsp: " ",
+        quot: '"',
+        "#039": "'",
+      };
+
+      return this.currentQuestion.question.replace(/&([^;]+);/gm, function(
+        match,
+        entity
+      ) {
+        return entities[entity] || match;
+      });
+    },
+  },
   components: {
-    QuizCompleteOverlay
-  }
+    QuizCompleteOverlay,
+  },
 };
 </script>
