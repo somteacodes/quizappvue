@@ -1,9 +1,9 @@
 {
-  "name": "quizvue",
+  "name": "quizvuetutorial",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "tutorial": "vue-cli-service serve",
+    "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
   },

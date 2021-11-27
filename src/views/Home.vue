@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 <template>
   <main class="flex h-screen items-center justify-center bg-gray-100">
     <!-- quiz overlay -->
@@ -89,7 +90,7 @@
 }
 </style>
 
- <script>
+<script>
 import { onMounted, ref } from "vue";
 import QuizCompleteOverlay from "./components/QuizCompleteOverlay";
 export default {
@@ -103,7 +104,7 @@ export default {
     const currentQuestion = ref({
       question: "",
       answer: 1,
-      choices: [],
+      choices: []
     });
 
     const questions = ref([]);
@@ -126,13 +127,13 @@ export default {
 
     // methods/functions
     let itemsRef = [];
-    const optionChosen = (element) => {
+    const optionChosen = element => {
       if (element) {
         itemsRef.push(element);
       }
     };
 
-    const clearSelected = (divSelected) => {
+    const clearSelected = divSelected => {
       setTimeout(() => {
         divSelected.classList.remove("option-correct");
         divSelected.classList.remove("option-wrong");
@@ -166,7 +167,7 @@ export default {
       }
     };
 
-    const countDownTimer = function () {
+    const countDownTimer = function() {
       let interVal = setInterval(() => {
         if (timer.value > 0) {
           timer.value--;
@@ -177,19 +178,19 @@ export default {
       }, 150);
     };
 
-    const fetchQuestionsFromServer = async function () {
+    const fetchQuestionsFromServer = async function() {
       console.log("fetch questions from server");
       fetch("https://opentdb.com/api.php?amount=10&category=18")
-        .then((res) => {
+        .then(res => {
           return res.json();
         })
-        .then((data) => {
+        .then(data => {
           // map json to fit our own arrangement
-          const newQuestions = data.results.map((serverQuestion) => {
+          const newQuestions = data.results.map(serverQuestion => {
             const arrangedQuestion = {
               question: serverQuestion.question,
               choices: "",
-              answer: "",
+              answer: ""
             };
 
             const choices = serverQuestion.incorrect_answers;
@@ -227,11 +228,11 @@ export default {
       loadQuestion,
       onOptionClicked,
       optionChosen,
-      endOfQuiz,
+      endOfQuiz
     };
   },
   components: {
-    QuizCompleteOverlay,
-  },
+    QuizCompleteOverlay
+  }
 };
 </script>
